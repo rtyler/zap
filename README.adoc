@@ -1,0 +1,20 @@
+= Zap
+
+A simple cross-platform orchestration and configuration management tool.
+
+The main goal for Zap is to a simple mechanism for managing groups of computers
+with varying configurations and needs. Zap accomplishes this with "tasks" which
+can be composed into "plans" or run standalone. These tasks can be collections
+of scripts or a statically linked binaries, which will be pushed to the target
+machine(s) and executed.
+
+Zap borrows ideas from
+link:https://puppet.com/docs/bolt/latest/bolt.html[Puppet Bolt]. but leaves
+some of the Puppet-based legacy from Bolt behind.
+
+
+== Goals
+
+* Support BSD and Linux with ease
+* Make creating a plan very easy,  including adding some simple logic
+* Explore tags-based task assignment
