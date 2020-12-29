@@ -1,5 +1,5 @@
 groups:
-- name: containers
+- name: bsd
   targets:
     - freebsd-tor
     - gopher

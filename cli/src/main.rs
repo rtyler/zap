@@ -7,6 +7,7 @@ use ssh2::Session;
 
 #[derive(Clone, Debug, Deserialize)]
 struct Inventory {
+    groups: Vec<Group>,
     targets: Vec<Target>,
 }
 
@@ -14,6 +15,12 @@ struct Inventory {
 struct Target {
     name: String,
     uri: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct Group {
+    name: String,
+    targets: Vec<String>,
 }
 
 fn main() {
@@ -30,18 +37,34 @@ fn main() {
 
     match opts.command.unwrap() {
         Command::Cmd(runopts) => {
+            if let Some(group) = inventory.groups.iter().find(|g| g.name == runopts.targets) {
+                std::process::exit(run_group(&runopts.command, &group, &inventory));
+            }
+
             if let Some(target) = inventory.targets.iter().find(|t| t.name == runopts.targets) {
                 println!("run a command: {:?}", runopts);
                 std::process::exit(run(&runopts.command, &target));
             }
-            else {
-                println!("Couldn't find a target named `{}`", runopts.targets);
-            }
+
+            println!("Couldn't find a target named `{}`", runopts.targets);
         },
         _ => {},
     }
 }
 
+fn run_group(command: &str, group: &Group, inventory: &Inventory) -> i32 {
+    let mut status = 1;
+    for target_name in group.targets.iter() {
+        // XXX: This is inefficient
+        for target in inventory.targets.iter() {
+            if &target.name == target_name {
+                println!("Running on `{}`", target.name);
+                status = run(command, &target);
+            }
+        }
+    }
+    status
+}
 
 fn run(command: &str, target: &Target) -> i32 {
     // Connect to the local SSH server
