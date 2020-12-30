@@ -1,3 +1,4 @@
+use colored::*;
 use gumdrop::Options;
 use std::io::BufReader;
 
@@ -27,17 +28,16 @@ fn main() {
 
     match opts.command.unwrap() {
         Command::Cmd(runopts) => {
-            println!("run a command: {:?}", runopts);
             if let Some(group) = inventory.groups.iter().find(|g| g.name == runopts.targets) {
                 std::process::exit(runner.run_group(&runopts.command, &group, &inventory));
             }
 
             if let Some(target) = inventory.targets.iter().find(|t| t.name == runopts.targets) {
-                println!("run a command: {:?}", runopts);
+                println!("{}", format!("run a command: {:?}", runopts).green());
                 std::process::exit(runner.run(&runopts.command, &target));
             }
 
-            println!("Couldn't find a target named `{}`", runopts.targets);
+            println!("{}", format!("Couldn't find a target named `{}`", runopts.targets).red());
         }
         _ => {}
     }

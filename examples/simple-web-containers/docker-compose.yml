@@ -1,0 +1,14 @@
+version: '3'
+services:
+  target1:
+    build: .
+    ports:
+      - '3000:80'
+      - '2000:22'
+    container_name: target1
+  target2:
+    build: .
+    ports:
+      - '3001:80'
+      - '2001:22'
+    container_name: target2

@@ -1,0 +1,65 @@
+/// This describes the task definition grammar for Zap
+
+taskfile = _{ SOI
+            ~ task+
+            ~ EOI }
+
+task = { "task"
+        ~ identifier
+        ~ opening_brace
+        ~ parameters
+        ~ script
+        ~ closing_brace
+        }
+
+// An identifier will be used to refer to the task later
+identifier = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+parameters = { "parameters"
+              ~ opening_brace
+              ~ parameter+
+              ~ closing_brace
+              }
+parameter = { identifier
+             ~ opening_brace
+             ~ required?
+             ~ help
+             ~ ptype
+             ~ closing_brace
+             }
+
+required = { "required" ~ equals ~ bool }
+help = { "help" ~ equals ~ string }
+ptype = { "type" ~ equals ~ typedef }
+
+
+script = { "script"
+          ~ opening_brace
+          ~ (script_inline)
+          ~ closing_brace
+          }
+script_inline = { "inline" ~ equals ~ string }
+
+opening_brace = { "{" }
+closing_brace = { "}" }
+equals        = { "=" }
+quote         = { "\"" }
+
+string        = { double_quoted }
+double_quoted = ${ (quote ~ inner_double_str ~ quote) }
+inner_double_str = @{ (!("\"" | "\\") ~ ANY)* ~ (escape ~ inner_double_str)? }
+escape    = @{ "\\" ~ ("\"" | "\\" | "r" | "n" | "t" | "0" | "'" | code | unicode) }
+code      = @{ "x" ~ hex_digit{2} }
+unicode   = @{ "u" ~ opening_brace ~ hex_digit{2, 6} ~ closing_brace }
+hex_digit = @{ '0'..'9' | 'a'..'f' | 'A'..'F' }
+
+typedef = { string_type }
+string_type = { "string" }
+
+bool = { truthy | falsey }
+truthy = { "true" }
+falsey = { "false" }
+
+block_comment = _{ "/*" ~ (block_comment | !"*/" ~ ANY)* ~ "*/" }
+COMMENT    = _{ block_comment | ("//" ~ (!NEWLINE~ ANY)*) }
+WHITESPACE = _{ " " | "\t" | NEWLINE }

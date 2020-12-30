@@ -64,10 +64,12 @@ task Install {
             required = true
         }
 
+        // Unless should be implied on every task
         unless {
             type = string
             help = "Script which when returns zero if the package has been installed, i.e. `test -f /usr/bin/nginx`"
         }
+        // provides should be implied on every task
     }
 
     // Parameters exposed as environment variables

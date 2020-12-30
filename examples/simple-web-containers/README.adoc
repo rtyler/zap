@@ -1,0 +1,4 @@
+= Managing simple web containers
+
+This is an example from the link:https://puppet.com/docs/bolt/latest/getting_started_with_bolt.html[Bolt documentation]
+
