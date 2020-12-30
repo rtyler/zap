@@ -1,27 +1,12 @@
 use gumdrop::Options;
-use serde::Deserialize;
 use std::io::BufReader;
-use std::io::prelude::*;
-use std::net::{TcpStream};
-use ssh2::Session;
 
-#[derive(Clone, Debug, Deserialize)]
-struct Inventory {
-    groups: Vec<Group>,
-    targets: Vec<Target>,
-}
+mod inventory;
+mod transport;
 
-#[derive(Clone, Debug, Deserialize)]
-struct Target {
-    name: String,
-    uri: String,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-struct Group {
-    name: String,
-    targets: Vec<String>,
-}
+use crate::inventory::*;
+use crate::transport::ssh::Ssh;
+use crate::transport::Transport;
 
 fn main() {
     let opts = MyOptions::parse_args_default_or_exit();
@@ -31,58 +16,32 @@ fn main() {
         std::process::exit(1);
     }
 
-    let file = std::fs::File::open("inventory.yml").expect("Failed to load the inventory.ymll file");
+    let file =
+        std::fs::File::open("inventory.yml").expect("Failed to load the inventory.ymll file");
     let reader = BufReader::new(file);
     let inventory: Inventory = serde_yaml::from_reader(reader).expect("Failed to read intenvory");
 
+    let runner = match &inventory.config.transport {
+        crate::inventory::Transport::Ssh => Ssh::default(),
+    };
+
     match opts.command.unwrap() {
         Command::Cmd(runopts) => {
+            println!("run a command: {:?}", runopts);
             if let Some(group) = inventory.groups.iter().find(|g| g.name == runopts.targets) {
-                std::process::exit(run_group(&runopts.command, &group, &inventory));
+                std::process::exit(runner.run_group(&runopts.command, &group, &inventory));
             }
 
             if let Some(target) = inventory.targets.iter().find(|t| t.name == runopts.targets) {
                 println!("run a command: {:?}", runopts);
-                std::process::exit(run(&runopts.command, &target));
+                std::process::exit(runner.run(&runopts.command, &target));
             }
 
             println!("Couldn't find a target named `{}`", runopts.targets);
-        },
-        _ => {},
-    }
-}
-
-fn run_group(command: &str, group: &Group, inventory: &Inventory) -> i32 {
-    let mut status = 1;
-    for target_name in group.targets.iter() {
-        // XXX: This is inefficient
-        for target in inventory.targets.iter() {
-            if &target.name == target_name {
-                println!("Running on `{}`", target.name);
-                status = run(command, &target);
-            }
         }
+        _ => {}
     }
-    status
 }
-
-fn run(command: &str, target: &Target) -> i32 {
-    // Connect to the local SSH server
-    let tcp = TcpStream::connect(format!("{}:22", target.uri)).unwrap();
-    let mut sess = Session::new().unwrap();
-    sess.set_tcp_stream(tcp);
-    sess.handshake().unwrap();
-    sess.userauth_agent(&std::env::var("USER").unwrap()).unwrap();
-
-    let mut channel = sess.channel_session().unwrap();
-    channel.exec(command).unwrap();
-    let mut s = String::new();
-    channel.read_to_string(&mut s).unwrap();
-    print!("{}", s);
-    channel.wait_close().expect("Failed to close the channel");
-    return channel.exit_status().unwrap();
-}
-
 
 #[derive(Debug, Options)]
 struct MyOptions {
@@ -113,7 +72,7 @@ enum Command {
     // Names can be explicitly specified using `#[options(name = "...")]`
     #[options(help = "show help for a command")]
     Help(HelpOpts),
-    #[options(help="Run a single command on a target(s)")]
+    #[options(help = "Run a single command on a target(s)")]
     Cmd(RunOpts),
 }
 
@@ -126,7 +85,7 @@ struct HelpOpts {
 // Options accepted for the `make` command
 #[derive(Debug, Options)]
 struct RunOpts {
-    #[options(free, help="Command to execute on the target(s)")]
+    #[options(free, help = "Command to execute on the target(s)")]
     command: String,
     #[options(help = "Name of a target or group")]
     targets: String,
