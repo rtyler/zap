@@ -18,6 +18,9 @@ some of the Puppet-based legacy from Bolt behind.
 * Support BSD and Linux with ease
 * Make creating a plan very easy,  including adding some simple logic
 * Explore tags-based task assignment
+* Pulll dependencies in through git-subtree or other, no inventing a new
+  package distribution mechanism
+
 
 
 == Sketches
@@ -51,6 +54,7 @@ task Install {
     restrict {
         // Regular expression to define what 
         match_fact("platform", "(.*)-freebsd")
+        match_fact("hostname", "www1")
     }
 
     parameters {
@@ -77,6 +81,22 @@ task Install {
         program = "/path/to/exes/in/tree"
         inline = """
         """
+    }
+}
+
+
+/ Exploring module syntax for namespacing these */
+module Install {
+    task Pkg {
+        restrict {}
+        parameters {}
+        script {}
+    }
+
+    task Zypper {
+        restrict {}
+        parameters {}
+        script {}
     }
 }
 ----
