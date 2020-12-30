@@ -18,3 +18,106 @@ some of the Puppet-based legacy from Bolt behind.
 * Support BSD and Linux with ease
 * Make creating a plan very easy,  including adding some simple logic
 * Explore tags-based task assignment
+
+
+== Sketches
+
+.install.ztask
+[source]
+----
+/*
+ * The FileSync should be an internal task type
+ */
+task FileSync {
+    parameters {
+        localfile {
+            type = string
+            help = "Path on the local system for the file to sync"
+            required = true
+        }
+        remotefile {
+            type = "string"
+            help = "Path on the remote system for the file"
+            required = true
+        }
+    }
+}
+
+// Sketch of a user-defined  task
+task Install {
+    // The restrict block is a collection of expressions which ensure that the
+    // task is not run anywhere it cannot run. Will fail if it's tried to run
+    // somewhere it cannot be run
+    restrict {
+        // Regular expression to define what 
+        match_fact("platform", "(.*)-freebsd")
+    }
+
+    parameters {
+        package {
+            type = string
+            help = 'The package to be installed'
+            required = true
+        }
+
+        unless {
+            type = string
+            help = "Script which when returns zero if the package has been installed, i.e. `test -f /usr/bin/nginx`"
+        }
+    }
+
+    // Parameters exposed as environment variables
+    // including the "ZAP_NOOP" variable which will be set if the script should
+    // be run in noop
+    script {
+        // either the file or the inline must be defined
+        file = "path/to/file/in/tree"
+        // When using `program`, the task should expect to find:
+        // command-name_x86_64-unknown-linux-gnu
+        program = "/path/to/exes/in/tree"
+        inline = """
+        """
+    }
+}
+----
+
+.Sketch of a zplan
+[source]
+----
+// Should things be just done proceduraly?
+
+task("sync-tree.ztask") { }
+
+task('tasks/install.ztask') {
+  name = "install-nginx"
+  package = "nginx"
+  unless = "test -f /usr/bin/nginx"
+}
+
+// Run another plan from within this plan (supdawg)
+plan("plans/prepare-website.zplan") {
+  // What parameters make sense here?
+}
+
+
+// Relationships between tasks, option A
+task('tasks/sync-tree.zplan') {
+    source = './foo'
+    destination = '/'
+
+    then = ["install-nginx"]
+}
+
+// Relationships between tasks, option B
+task('tasks/sync-tree.zplan') {
+    source = './foo'
+    destination = '/'
+
+    then {
+        task("tasks/install.ztask") {
+            package = "nginx"
+            unless = "test -f /usr/bin/nginx"
+        }
+    }
+}
+----
