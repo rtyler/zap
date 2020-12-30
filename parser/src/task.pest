@@ -7,7 +7,7 @@ taskfile = _{ SOI
 task = { "task"
         ~ identifier
         ~ opening_brace
-        ~ parameters
+        ~ parameters?
         ~ script
         ~ closing_brace
         }
