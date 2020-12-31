@@ -5,5 +5,6 @@ authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
+log = "0.4"
 pest = "~2.1"
 pest_derive = "~2.1"

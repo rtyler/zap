@@ -38,12 +38,12 @@ script = { "script"
           ~ (script_inline)
           ~ closing_brace
           }
-script_inline = { "inline" ~ equals ~ string }
+script_inline = _{ "inline" ~ equals ~ string }
 
-opening_brace = { "{" }
-closing_brace = { "}" }
-equals        = { "=" }
-quote         = { "\"" }
+opening_brace = _{ "{" }
+closing_brace = _{ "}" }
+equals        = _{ "=" }
+quote         = _{ "\"" }
 
 string        = { double_quoted }
 double_quoted = ${ (quote ~ inner_double_str ~ quote) }

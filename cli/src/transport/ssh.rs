@@ -1,4 +1,5 @@
 use crate::inventory::{Group, Inventory, Target};
+use crate::transport::EnvVars;
 use crate::transport::Transport;
 
 use serde::{Deserialize, Serialize};
@@ -16,20 +17,20 @@ impl Default for Ssh {
 }
 
 impl Transport for Ssh {
-    fn run_group(&self, command: &str, group: &Group, inventory: &Inventory) -> i32 {
+    fn run_group(&self, command: &str, group: &Group, inventory: &Inventory, env: Option<EnvVars>) -> i32 {
         let mut status = 1;
         for target_name in group.targets.iter() {
             // XXX: This is inefficient
             for target in inventory.targets.iter() {
                 if &target.name == target_name {
                     println!("Running on `{}`", target.name);
-                    status = self.run(command, &target);
+                    status = self.run(command, &target, env.as_ref());
                 }
             }
         }
         status
     }
-    fn run(&self, command: &str, target: &Target) -> i32 {
+    fn run(&self, command: &str, target: &Target, env: Option<&EnvVars>) -> i32 {
         // Connect to the local SSH server
         let tcp = TcpStream::connect(format!("{}:22", target.uri)).unwrap();
         let mut sess = Session::new().unwrap();
@@ -39,7 +40,17 @@ impl Transport for Ssh {
             .unwrap();
 
         let mut channel = sess.channel_session().unwrap();
-        channel.exec(command).unwrap();
+
+        let mut segments = vec![];
+
+        if let Some(env) = env {
+            for (key, val) in env.iter() {
+                segments.push(format!("export ZAP_{}=\"{}\"", key.to_uppercase(), val));
+            }
+        }
+        segments.push(command.to_string());
+
+        channel.exec(&segments.join(";")).unwrap();
         let mut s = String::new();
         channel.read_to_string(&mut s).unwrap();
         print!("{}", s);
