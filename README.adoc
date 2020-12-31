@@ -38,9 +38,20 @@ a wrapped shell/ruby/python script which does some specific piece of
 functionality. Tasks may also take parameters, which allow for some
 pluggability of new values.
 
+Tasks have some built-in parameters that should not be overridden.
+
+.Built-in Parameters
+|===
+| Parameter | Description
+
+| `provides`
+| A relative or absolute path to a file that the task provides. If the file exists, then the task will be skipped.
+
+|===
+
 .echo.ztask
 [source]
----
+----
 task Echo {
     parameters {
         msg {
