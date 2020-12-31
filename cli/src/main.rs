@@ -10,7 +10,7 @@ mod transport;
 
 use crate::inventory::*;
 use crate::transport::ssh::Ssh;
-use zap_parser::*;
+use zap_parser::task::Task;
 
 fn main() {
     pretty_env_logger::init();
@@ -33,15 +33,22 @@ fn main() {
     match opts.command.unwrap() {
         Command::Cmd(opts) => handle_cmd(opts, &runner, inventory),
         Command::Task(opts) => handle_task(opts, &runner, inventory),
+        Command::Plan(opts) => handle_plan(opts, &runner, inventory),
         _ => {}
     }
+}
+
+/**
+ * This function will parse and execute a plan
+ */
+fn handle_plan(opts: PlanOpts, runner: &dyn crate::transport::Transport, inventory: Inventory) {
 }
 
 /**
  * This function will handle a task
  */
 fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, inventory: Inventory) {
-    println!("running task: {:?}", opts);
+    println!("{}", format!("Running task with: {:?}", opts).green());
 
     match Task::from_path(&opts.task) {
         Ok(task) => {
@@ -159,6 +166,8 @@ enum Command {
     Cmd(CmdOpts),
     #[options(help = "Execute a task on a target(s)")]
     Task(TaskOpts),
+    #[options(help = "Execute a plan on a target(s)")]
+    Plan(PlanOpts),
 }
 
 #[derive(Debug, Options)]
@@ -173,12 +182,21 @@ struct CmdOpts {
     #[options(help = "Name of a target or group")]
     targets: String,
 }
+
 #[derive(Debug, Options)]
 struct TaskOpts {
-    #[options(free, help = "Task to execute, must exist in ZAP_PATH")]
+    #[options(free, help = "Task to execute")]
     task: PathBuf,
     #[options(short = "p", help = "Parameter values")]
     parameter: Vec<String>,
+    #[options(help = "Name of a target or group")]
+    targets: String,
+}
+
+#[derive(Debug, Options)]
+struct PlanOpts {
+    #[options(free, help = "Plan to execute")]
+    plan: PathBuf,
     #[options(help = "Name of a target or group")]
     targets: String,
 }

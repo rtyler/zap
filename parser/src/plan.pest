@@ -1,43 +1,20 @@
-/// This describes the task definition grammar for Zap
+// This describes the plan definition grammar for zap
 
-taskfile = _{ SOI
+planfile = _{ SOI
             ~ task+
             ~ EOI }
 
+
 task = { "task"
-        ~ identifier
+        ~ string
         ~ opening_brace
-        ~ parameters?
-        ~ script
+        ~ kwarg*
         ~ closing_brace
         }
 
-parameters = { "parameters"
-              ~ opening_brace
-              ~ parameter+
-              ~ closing_brace
-              }
-parameter = { identifier
-             ~ opening_brace
-             ~ required?
-             ~ help
-             ~ ptype
-             ~ closing_brace
-             }
-
-required = { "required" ~ equals ~ bool }
-help = { "help" ~ equals ~ string }
-ptype = { "type" ~ equals ~ typedef }
-
-
-script = { "script"
-          ~ opening_brace
-          ~ (script_inline)
-          ~ closing_brace
-          }
-script_inline = _{ "inline" ~ equals ~ string }
-
-
+kwarg = { identifier ~ equals ~ arg }
+// Right now only string arguments are supported
+arg = { string }
 
 // Unfortunately pest doesn't yet support sharing rules between grammars
 // so everything below this line is copy/pasted between task.pest and

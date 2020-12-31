@@ -1,0 +1,13 @@
+/*
+ * This zplan just loads a couple tasks and then executes them
+ *
+ * It is expected to be run from the root of the project tree.
+ */
+
+task "../tasks/echo.ztask" {
+    msg = "Hello from the wonderful world of zplans!"
+}
+
+task "../tasks/echo.ztask" {
+    msg = "This can actually take inline shells too: $(date)"
+}

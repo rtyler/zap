@@ -21,6 +21,12 @@ some of the Puppet-based legacy from Bolt behind.
 * Pulll dependencies in through git-subtree or other, no inventing a new
   package distribution mechanism
 
+== Examples
+
+[source]
+----
+./target/debug/zap task tasks/echo.ztask -p msg="Hello World" -t zap-freebsd
+----
 
 
 == Sketches
