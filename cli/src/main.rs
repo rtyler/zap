@@ -15,7 +15,7 @@ use zap_parser::task::Task;
 
 fn main() {
     pretty_env_logger::init();
-    let opts = MyOptions::parse_args_default_or_exit();
+    let opts = ZapOptions::parse_args_default_or_exit();
 
     if opts.command.is_none() {
         println!("Must specify a subcommand!");
@@ -35,7 +35,27 @@ fn main() {
         Command::Cmd(opts) => handle_cmd(opts, &runner, inventory),
         Command::Task(opts) => handle_task(opts, &runner, inventory),
         Command::Plan(opts) => handle_plan(opts, &runner, inventory),
+        Command::Check(opts) => handle_check(opts),
         _ => {}
+    }
+}
+
+/**
+ * This function simply attempts to parse the given ztask or zplan files in order
+ * to validate that they're properly formatted
+ */
+fn handle_check(opts: CheckOpts) {
+    for file in opts.files.iter() {
+        if let Some(ext) = file.as_path().extension() {
+            if ext == "ztask" {
+                let task = Task::from_path(&file).expect("Failed to parse");
+                println!("Parsed task {} properly", task.name);
+            }
+            if ext == "zplan" {
+                let _plan = Plan::from_path(&file).expect("Failed to parse");
+                println!("Parsed plan properly");
+            }
+        }
     }
 }
 
@@ -127,7 +147,7 @@ fn handle_cmd(opts: CmdOpts, runner: &dyn crate::transport::Transport, inventory
 }
 
 #[derive(Debug, Options)]
-struct MyOptions {
+struct ZapOptions {
     // Options here can be accepted with any command (or none at all),
     // but they must come before the command name.
     #[options(help = "print help message")]
@@ -161,6 +181,8 @@ enum Command {
     Task(TaskOpts),
     #[options(help = "Execute a plan on a target(s)")]
     Plan(PlanOpts),
+    #[options(help = "Check that the specified .ztask or .zplan file is valid")]
+    Check(CheckOpts)
 }
 
 #[derive(Debug, Options)]
@@ -192,6 +214,12 @@ struct PlanOpts {
     plan: PathBuf,
     #[options(help = "Name of a target or group")]
     targets: String,
+}
+
+#[derive(Debug, Options)]
+struct CheckOpts {
+    #[options(free, help = "Files to check")]
+    files: Vec<PathBuf>,
 }
 
 #[cfg(test)]
