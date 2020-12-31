@@ -17,11 +17,21 @@ pub struct Group {
 pub struct Target {
     pub name: String,
     pub uri: String,
+    pub config: Option<Config>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
+    #[serde(default = "default_transport")]
     pub transport: Transport,
+    pub ssh: Option<SshConfig>,
+}
+fn default_transport() -> Transport { Transport::Ssh }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SshConfig {
+    pub user: String,
+    pub password: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

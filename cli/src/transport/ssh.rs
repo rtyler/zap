@@ -36,8 +36,20 @@ impl Transport for Ssh {
         let mut sess = Session::new().unwrap();
         sess.set_tcp_stream(tcp);
         sess.handshake().unwrap();
-        sess.userauth_agent(&std::env::var("USER").unwrap())
-            .unwrap();
+
+        let mut authenticated = false;
+
+        if let Some(config) = &target.config {
+            if let Some(sshconfig) = &config.ssh {
+                // requires PasswordAuthentication yes
+                sess.userauth_password(&sshconfig.user, &sshconfig.password).unwrap();
+                authenticated = true;
+            }
+        }
+        if ! authenticated {
+            sess.userauth_agent(&std::env::var("USER").unwrap())
+                .unwrap();
+        }
 
         let mut channel = sess.channel_session().unwrap();
 
@@ -45,6 +57,7 @@ impl Transport for Ssh {
 
         if let Some(env) = env {
             for (key, val) in env.iter() {
+                channel.setenv(key, val);
                 segments.push(format!("export ZAP_{}=\"{}\"", key.to_uppercase(), val));
             }
         }

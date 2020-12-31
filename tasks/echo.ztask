@@ -7,6 +7,6 @@ task Echo {
         }
     }
     script {
-        inline = "echo ${ZAP_MSG}"
+        inline = "env; echo ${ZAP_MSG}"
     }
 }

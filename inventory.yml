@@ -9,6 +9,12 @@ targets:
     uri: 192.168.1.41
   - name: gopher
     uri: 192.168.1.41
+  - name: zap-freebsd
+    uri: 192.168.1.224
+    config:
+      ssh:
+        user: root
+        password: root
 
 config:
   transport: ssh
