@@ -57,13 +57,13 @@ task Echo {
     parameters {
         msg {
             required = true
-            help = "String to echo back to the client"
+            help = 'String to echo back to the client'
             type = string
         }
     }
 
     script {
-        inline = "echo {{msg}}"
+        inline = 'echo {{msg}}'
     }
 }
 ----
@@ -78,11 +78,12 @@ will be executed in the order that they are defined.
 .simple.zplan
 [source]
 ----
-task "tasks/echo.ztask" {
-    msg = "Hello from the wonderful world of zplans!"
+task 'tasks/echo.ztask' {
+    msg = 'Hello from the wonderful world of zplans!'
 }
 
-task "tasks/echo.ztask" {
-    msg = "This is nice"
+task 'tasks/echo.ztask' {
+    msg = 'This is nice'
 }
+
 ----
