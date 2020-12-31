@@ -26,7 +26,9 @@ pub struct Config {
     pub transport: Transport,
     pub ssh: Option<SshConfig>,
 }
-fn default_transport() -> Transport { Transport::Ssh }
+fn default_transport() -> Transport {
+    Transport::Ssh
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct SshConfig {

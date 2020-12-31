@@ -1,15 +1,15 @@
 use colored::*;
 use gumdrop::Options;
 use log::*;
+use std::collections::HashMap;
 use std::io::BufReader;
 
 mod inventory;
 mod transport;
 
-use zap_parser::*;
 use crate::inventory::*;
 use crate::transport::ssh::Ssh;
-use crate::transport::Transport;
+use zap_parser::*;
 
 fn main() {
     pretty_env_logger::init();
@@ -43,12 +43,11 @@ fn load_ztasks() -> Vec<Task> {
     for entry in glob("tasks/**/*.ztask").expect("Failed to read glob pattern") {
         match entry {
             Ok(path) => {
-                let task = Task::from_path(&path).unwrap();
                 if let Ok(task) = Task::from_path(&path) {
                     info!("loaded ztask: {}", task.name);
                     tasks.push(task);
                 }
-            },
+            }
             Err(e) => println!("{:?}", e),
         }
     }
@@ -63,25 +62,30 @@ fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, invento
 
     for task in load_ztasks() {
         if task.name == opts.task {
-            let mut env = crate::transport::EnvVars::new();
+            let mut parameters = HashMap::new();
 
+            /*
+             * XXX: This is very primitive way, there must be a better way to take
+             * arbitrary command line parameters than this.
+             */
             for parameter in opts.parameter.iter() {
                 let parts: Vec<&str> = parameter.split("=").collect();
                 if parts.len() == 2 {
-                    env.insert(parts[0].to_string(), parts[1].to_string());
+                    parameters.insert(parts[0].to_string(), parts[1].to_string());
                 }
             }
 
             if let Some(script) = task.get_script() {
+                let command = render_command(&script, &parameters);
+
                 // TODO: refactor with handle_cmd
                 if let Some(group) = inventory.groups.iter().find(|g| g.name == opts.targets) {
-                    std::process::exit(runner.run_group(&script, &group, &inventory, Some(env)));
+                    std::process::exit(runner.run_group(&command, &group, &inventory));
                 }
 
                 if let Some(target) = inventory.targets.iter().find(|t| t.name == opts.targets) {
-                    std::process::exit(runner.run(&script, &target, Some(&env)));
+                    std::process::exit(runner.run(&command, &target));
                 }
-
             }
         }
     }
@@ -99,15 +103,40 @@ fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, invento
  */
 fn handle_cmd(opts: CmdOpts, runner: &dyn crate::transport::Transport, inventory: Inventory) {
     if let Some(group) = inventory.groups.iter().find(|g| g.name == opts.targets) {
-        std::process::exit(runner.run_group(&opts.command, &group, &inventory, None));
+        std::process::exit(runner.run_group(&opts.command, &group, &inventory));
     }
 
     if let Some(target) = inventory.targets.iter().find(|t| t.name == opts.targets) {
         println!("{}", format!("run a command: {:?}", opts).green());
-        std::process::exit(runner.run(&opts.command, &target, None));
+        std::process::exit(runner.run(&opts.command, &target));
     }
 
-    println!("{}", format!("Couldn't find a target named `{}`", opts.targets).red());
+    println!(
+        "{}",
+        format!("Couldn't find a target named `{}`", opts.targets).red()
+    );
+}
+
+/**
+ * render_command will handle injecting the parameters for a given command
+ * into the string where appropriate, using the Handlebars syntax.
+ *
+ * If the template fails to render, then this will just return the command it
+ * was given
+ */
+fn render_command(cmd: &str, parameters: &HashMap<String, String>) -> String {
+    use handlebars::Handlebars;
+
+    let handlebars = Handlebars::new();
+    match handlebars.render_template(cmd, parameters) {
+        Ok(rendered) => {
+            return rendered;
+        }
+        Err(err) => {
+            error!("Failed to render command ({:?}): {}", err, cmd);
+            return cmd.to_string();
+        }
+    }
 }
 
 #[derive(Debug, Options)]
@@ -161,8 +190,33 @@ struct CmdOpts {
 struct TaskOpts {
     #[options(free, help = "Task to execute, must exist in ZAP_PATH")]
     task: String,
-    #[options(short="p", help = "Parameter values")]
+    #[options(short = "p", help = "Parameter values")]
     parameter: Vec<String>,
     #[options(help = "Name of a target or group")]
     targets: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_render_command() {
+        let cmd = "echo \"{{msg}}\"";
+        let mut params = HashMap::new();
+        params.insert("msg".to_string(), "hello".to_string());
+
+        let output = render_command(&cmd, &params);
+        assert_eq!(output, "echo \"hello\"");
+    }
+
+    #[test]
+    fn test_render_command_bad_template() {
+        let cmd = "echo \"{{msg\"";
+        let mut params = HashMap::new();
+        params.insert("msg".to_string(), "hello".to_string());
+
+        let output = render_command(&cmd, &params);
+        assert_eq!(output, "echo \"{{msg\"");
+    }
 }

@@ -3,16 +3,15 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
-use pest::Parser;
 use pest::error::Error as PestError;
 use pest::error::ErrorVariant;
 use pest::iterators::Pairs;
+use pest::Parser;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[grammar="task.pest"]
+#[grammar = "task.pest"]
 struct TaskParser;
-
 
 pub struct Task {
     pub name: String,
@@ -25,7 +24,7 @@ impl Task {
     }
 
     pub fn new(name: &str) -> Self {
-        Task { 
+        Task {
             name: name.to_string(),
             inline: None,
         }
@@ -38,7 +37,7 @@ impl Task {
             match parsed.as_rule() {
                 Rule::identifier => {
                     task = Some(Task::new(parsed.as_str()));
-                },
+                }
                 Rule::script => {
                     let script = parse_str(&mut parsed.into_inner())?;
 
@@ -46,14 +45,13 @@ impl Task {
                         task.inline = Some(script);
                     }
                 }
-                _ => {},
+                _ => {}
             }
         }
 
         if let Some(task) = task {
             return Ok(task);
-        }
-        else {
+        } else {
             return Err(PestError::new_from_pos(
                 ErrorVariant::CustomError {
                     message: "Could not find a valid task definition".to_string(),
@@ -70,8 +68,8 @@ impl Task {
             match parsed.as_rule() {
                 Rule::task => {
                     return Task::parse(&mut parsed.into_inner());
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
         return Err(PestError::new_from_pos(
@@ -123,10 +121,10 @@ fn parse_str(parser: &mut Pairs<Rule>) -> Result<String, PestError<Rule>> {
         match parsed.as_rule() {
             Rule::string => {
                 return parse_str(&mut parsed.into_inner());
-            },
+            }
             Rule::double_quoted => {
                 return parse_str(&mut parsed.into_inner());
-            },
+            }
             Rule::inner_double_str => {
                 return Ok(parsed.as_str().to_string());
             }
@@ -160,8 +158,7 @@ mod tests {
                     inline = "zypper in -y ${ZAP_PACKAGE}"
                 }
             }"#;
-        let _task = TaskParser::parse(Rule::task, buf)
-            .unwrap().next().unwrap();
+        let _task = TaskParser::parse(Rule::task, buf).unwrap().next().unwrap();
     }
 
     #[test]
@@ -171,8 +168,7 @@ mod tests {
                     inline = "env"
                 }
             }"#;
-        let task = TaskParser::parse(Rule::task, buf)
-            .unwrap().next().unwrap();
+        let _task = TaskParser::parse(Rule::task, buf).unwrap().next().unwrap();
     }
 
     #[test]
