@@ -17,7 +17,7 @@ pub struct ExecutableTask {
 }
 
 impl ExecutableTask {
-    fn new(task: crate::task::Task, parameters: HashMap<String, String>) -> Self {
+    pub fn new(task: crate::task::Task, parameters: HashMap<String, String>) -> Self {
         Self { task, parameters }
     }
 }
@@ -138,10 +138,10 @@ fn parse_str(parser: &mut Pairs<Rule>) -> Result<String, PestError<Rule>> {
             Rule::string => {
                 return parse_str(&mut parsed.into_inner());
             }
-            Rule::double_quoted => {
+            Rule::single_quoted => {
                 return parse_str(&mut parsed.into_inner());
             }
-            Rule::inner_double_str => {
+            Rule::inner_single_str => {
                 return Ok(parsed.as_str().to_string());
             }
             _ => {}
@@ -168,12 +168,12 @@ mod tests {
  * It is expected to be run from the root of the project tree.
  */
 
-task "../tasks/echo.ztask" {
-    msg = "Hello from the wonderful world of zplans!"
+task '../tasks/echo.ztask' {
+    msg = 'Hello from the wonderful world of zplans!'
 }
 
-task "../tasks/echo.ztask" {
-    msg = "This can actually take inline shells too: $(date)"
+task '../tasks/echo.ztask' {
+    msg = 'This can actually take inline shells too: $(date)'
 }"#;
         let _plan = PlanParser::parse(Rule::planfile, buf)
             .unwrap()
@@ -183,12 +183,12 @@ task "../tasks/echo.ztask" {
 
     #[test]
     fn parse_plan_fn() {
-        let buf = r#"task "../tasks/echo.ztask" {
-                        msg = "Hello from the wonderful world of zplans!"
+        let buf = r#"task '../tasks/echo.ztask' {
+                        msg = 'Hello from the wonderful world of zplans!'
                     }
 
-                    task "../tasks/echo.ztask" {
-                        msg = "This can actually take inline shells too: $(date)"
+                    task '../tasks/echo.ztask' {
+                        msg = 'This can actually take inline shells too: $(date)'
                     }"#;
         let plan = Plan::from_str(buf).expect("Failed to parse the plan");
         assert_eq!(plan.tasks.len(), 2);

@@ -38,7 +38,8 @@ a wrapped shell/ruby/python script which does some specific piece of
 functionality. Tasks may also take parameters, which allow for some
 pluggability of new values.
 
-Tasks have some built-in parameters that should not be overridden.
+Tasks have some default parameters that should not be overridden in new task
+definitions.
 
 .Built-in Parameters
 |===

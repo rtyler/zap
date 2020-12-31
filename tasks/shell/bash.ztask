@@ -1,0 +1,15 @@
+task Bash {
+    parameters {
+        script {
+            required = true
+            help = 'A script to run via the bash shell (assumes bash is in the defult PATH)'
+            type = string
+        }
+    }
+
+    script {
+        inline = '''#!/usr/bin/env bash
+            {{script}}
+        '''
+    }
+}

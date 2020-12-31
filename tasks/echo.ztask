@@ -2,12 +2,12 @@ task Echo {
     parameters {
         msg {
             required = true
-            help = "String to echo back to the client"
+            help = 'String to echo back to the client'
             type = string
         }
     }
 
     script {
-        inline = "echo {{msg}}"
+        inline = 'echo "{{msg}}"'
     }
 }

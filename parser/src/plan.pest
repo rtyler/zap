@@ -26,11 +26,16 @@ identifier = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 opening_brace = _{ "{" }
 closing_brace = _{ "}" }
 equals        = _{ "=" }
-quote         = _{ "\"" }
+quote         = _{ "'" }
+triple_quote  = _{ "'''" }
 
-string        = { double_quoted }
-double_quoted = ${ (quote ~ inner_double_str ~ quote) }
-inner_double_str = @{ (!("\"" | "\\") ~ ANY)* ~ (escape ~ inner_double_str)? }
+string        = { triple_quoted | single_quoted }
+single_quoted = ${ (quote ~ inner_single_str ~ quote) }
+inner_single_str = @{ (!(quote | "\\") ~ ANY)* ~ (escape ~ inner_single_str)? }
+
+triple_quoted = ${ (triple_quote ~ inner_triple_str ~ triple_quote) }
+inner_triple_str = @{ (!(triple_quote | "\\") ~ ANY)* ~ (escape ~ inner_triple_str)? }
+
 escape    = @{ "\\" ~ ("\"" | "\\" | "r" | "n" | "t" | "0" | "'" | code | unicode) }
 code      = @{ "x" ~ hex_digit{2} }
 unicode   = @{ "u" ~ opening_brace ~ hex_digit{2, 6} ~ closing_brace }

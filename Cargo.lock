@@ -634,6 +634,7 @@ dependencies = [
 name = "zap-parser"
 version = "0.1.0"
 dependencies = [
+ "handlebars",
  "log",
  "pest",
  "pest_derive",

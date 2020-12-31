@@ -1,4 +1,5 @@
 use crate::inventory::{Group, Inventory, Target};
+use zap_parser::plan::ExecutableTask;
 
 pub mod ssh;
 
@@ -7,6 +8,6 @@ pub mod ssh;
  * connecting to targets
  */
 pub trait Transport {
-    fn run_group(&self, cmd: &str, group: &Group, inv: &Inventory) -> i32;
-    fn run(&self, command: &str, target: &Target) -> i32;
+    fn run_group(&self, cmd: &ExecutableTask, group: &Group, inv: &Inventory) -> i32;
+    fn run(&self, command: &ExecutableTask, target: &Target) -> i32;
 }

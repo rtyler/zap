@@ -10,7 +10,7 @@ mod transport;
 
 use crate::inventory::*;
 use crate::transport::ssh::Ssh;
-use zap_parser::plan::Plan;
+use zap_parser::plan::{ExecutableTask, Plan};
 use zap_parser::task::Task;
 
 fn main() {
@@ -51,13 +51,7 @@ fn handle_plan(opts: PlanOpts, runner: &dyn crate::transport::Transport, invento
             info!("Plan located, preparing to execute");
             for task in plan.tasks {
                 info!("Running executable task: {:?}", task);
-                exit = execute_task_on(
-                    opts.targets.clone(),
-                    &task.task,
-                    &task.parameters,
-                    runner,
-                    &inventory,
-                );
+                exit = execute_task_on(opts.targets.clone(), &task, runner, &inventory);
             }
         }
         Err(err) => {
@@ -69,21 +63,16 @@ fn handle_plan(opts: PlanOpts, runner: &dyn crate::transport::Transport, invento
 
 fn execute_task_on(
     targets: String,
-    task: &Task,
-    parameters: &HashMap<String, String>,
+    task: &ExecutableTask,
     runner: &dyn crate::transport::Transport,
     inventory: &Inventory,
 ) -> i32 {
-    if let Some(script) = task.get_script() {
-        let command = render_command(&script, &parameters);
+    if let Some(group) = inventory.groups.iter().find(|g| g.name == targets) {
+        return runner.run_group(task, &group, &inventory);
+    }
 
-        if let Some(group) = inventory.groups.iter().find(|g| g.name == targets) {
-            return runner.run_group(&command, &group, &inventory);
-        }
-
-        if let Some(target) = inventory.targets.iter().find(|t| t.name == targets) {
-            return runner.run(&command, &target);
-        }
+    if let Some(target) = inventory.targets.iter().find(|t| t.name == targets) {
+        return runner.run(task, &target);
     }
     error!("Failed to locate a script to execute for the task!");
     return -1;
@@ -110,13 +99,10 @@ fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, invento
                     parameters.insert(parts[0].to_string(), parts[1].to_string());
                 }
             }
-            std::process::exit(execute_task_on(
-                opts.targets,
-                &task,
-                &parameters,
-                runner,
-                &inventory,
-            ));
+
+            let task = ExecutableTask::new(task, parameters);
+
+            std::process::exit(execute_task_on(opts.targets, &task, runner, &inventory));
         }
         Err(err) => {
             println!("Failed to load task: {:?}", err);
@@ -135,38 +121,9 @@ fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, invento
  * non-zero.
  */
 fn handle_cmd(opts: CmdOpts, runner: &dyn crate::transport::Transport, inventory: Inventory) {
-    let mut task = Task::new("Dynamic");
-    task.inline = Some(opts.command);
-    let parameters = HashMap::new();
-    std::process::exit(execute_task_on(
-        opts.targets,
-        &task,
-        &parameters,
-        runner,
-        &inventory,
-    ));
-}
-
-/**
- * render_command will handle injecting the parameters for a given command
- * into the string where appropriate, using the Handlebars syntax.
- *
- * If the template fails to render, then this will just return the command it
- * was given
- */
-fn render_command(cmd: &str, parameters: &HashMap<String, String>) -> String {
-    use handlebars::Handlebars;
-
-    let handlebars = Handlebars::new();
-    match handlebars.render_template(cmd, parameters) {
-        Ok(rendered) => {
-            return rendered;
-        }
-        Err(err) => {
-            error!("Failed to render command ({:?}): {}", err, cmd);
-            return cmd.to_string();
-        }
-    }
+    let mut task = ExecutableTask::new(Task::new("Dynamic"), HashMap::new());
+    task.task.script.inline = Some(opts.command);
+    std::process::exit(execute_task_on(opts.targets, &task, runner, &inventory));
 }
 
 #[derive(Debug, Options)]
@@ -238,26 +195,4 @@ struct PlanOpts {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_render_command() {
-        let cmd = "echo \"{{msg}}\"";
-        let mut params = HashMap::new();
-        params.insert("msg".to_string(), "hello".to_string());
-
-        let output = render_command(&cmd, &params);
-        assert_eq!(output, "echo \"hello\"");
-    }
-
-    #[test]
-    fn test_render_command_bad_template() {
-        let cmd = "echo \"{{msg\"";
-        let mut params = HashMap::new();
-        params.insert("msg".to_string(), "hello".to_string());
-
-        let output = render_command(&cmd, &params);
-        assert_eq!(output, "echo \"{{msg\"");
-    }
-}
+mod tests {}
