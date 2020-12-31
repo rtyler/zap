@@ -71,7 +71,13 @@ fn handle_plan(opts: PlanOpts, runner: &dyn crate::transport::Transport, invento
             info!("Plan located, preparing to execute");
             for task in plan.tasks {
                 info!("Running executable task: {:?}", task);
-                exit = execute_task_on(opts.targets.clone(), &task, runner, &inventory);
+                exit = execute_task_on(
+                    opts.targets.clone(),
+                    &task,
+                    runner,
+                    &inventory,
+                    opts.dry_run,
+                );
             }
         }
         Err(err) => {
@@ -86,13 +92,14 @@ fn execute_task_on(
     task: &ExecutableTask,
     runner: &dyn crate::transport::Transport,
     inventory: &Inventory,
+    dry_run: bool,
 ) -> i32 {
     if let Some(group) = inventory.groups.iter().find(|g| g.name == targets) {
-        return runner.run_group(task, &group, &inventory);
+        return runner.run_group(task, &group, &inventory, dry_run);
     }
 
     if let Some(target) = inventory.targets.iter().find(|t| t.name == targets) {
-        return runner.run(task, &target);
+        return runner.run(task, &target, dry_run);
     }
     error!("Failed to locate a script to execute for the task!");
     return -1;
@@ -122,7 +129,13 @@ fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, invento
 
             let task = ExecutableTask::new(task, parameters);
 
-            std::process::exit(execute_task_on(opts.targets, &task, runner, &inventory));
+            std::process::exit(execute_task_on(
+                opts.targets,
+                &task,
+                runner,
+                &inventory,
+                opts.dry_run,
+            ));
         }
         Err(err) => {
             println!("Failed to load task: {:?}", err);
@@ -143,7 +156,13 @@ fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, invento
 fn handle_cmd(opts: CmdOpts, runner: &dyn crate::transport::Transport, inventory: Inventory) {
     let mut task = ExecutableTask::new(Task::new("Dynamic"), HashMap::new());
     task.task.script.inline = Some(opts.command);
-    std::process::exit(execute_task_on(opts.targets, &task, runner, &inventory));
+    std::process::exit(execute_task_on(
+        opts.targets,
+        &task,
+        runner,
+        &inventory,
+        false,
+    ));
 }
 
 #[derive(Debug, Options)]
@@ -182,7 +201,7 @@ enum Command {
     #[options(help = "Execute a plan on a target(s)")]
     Plan(PlanOpts),
     #[options(help = "Check that the specified .ztask or .zplan file is valid")]
-    Check(CheckOpts)
+    Check(CheckOpts),
 }
 
 #[derive(Debug, Options)]
@@ -206,6 +225,8 @@ struct TaskOpts {
     parameter: Vec<String>,
     #[options(help = "Name of a target or group")]
     targets: String,
+    #[options(help = "Run the task in dry-run mode")]
+    dry_run: bool,
 }
 
 #[derive(Debug, Options)]
@@ -214,6 +235,8 @@ struct PlanOpts {
     plan: PathBuf,
     #[options(help = "Name of a target or group")]
     targets: String,
+    #[options(help = "Run the task in dry-run mode")]
+    dry_run: bool,
 }
 
 #[derive(Debug, Options)]

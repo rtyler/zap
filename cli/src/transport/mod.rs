@@ -8,6 +8,7 @@ pub mod ssh;
  * connecting to targets
  */
 pub trait Transport {
-    fn run_group(&self, cmd: &ExecutableTask, group: &Group, inv: &Inventory) -> i32;
-    fn run(&self, command: &ExecutableTask, target: &Target) -> i32;
+    fn run_group(&self, cmd: &ExecutableTask, group: &Group, inv: &Inventory, dry_run: bool)
+        -> i32;
+    fn run(&self, command: &ExecutableTask, target: &Target, dry_run: bool) -> i32;
 }

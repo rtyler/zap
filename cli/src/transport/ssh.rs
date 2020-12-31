@@ -1,5 +1,6 @@
 use crate::inventory::{Group, Inventory, Target};
 use crate::transport::Transport;
+use colored::*;
 
 use log::*;
 use serde::{Deserialize, Serialize};
@@ -22,21 +23,27 @@ impl Default for Ssh {
 }
 
 impl Transport for Ssh {
-    fn run_group(&self, command: &ExecutableTask, group: &Group, inventory: &Inventory) -> i32 {
+    fn run_group(
+        &self,
+        command: &ExecutableTask,
+        group: &Group,
+        inventory: &Inventory,
+        dry_run: bool,
+    ) -> i32 {
         let mut status = 1;
         for target_name in group.targets.iter() {
             // XXX: This is inefficient
             for target in inventory.targets.iter() {
                 if &target.name == target_name {
                     println!("Running on `{}`", target.name);
-                    status = self.run(command, &target);
+                    status = self.run(command, &target, dry_run);
                 }
             }
         }
         status
     }
 
-    fn run(&self, command: &ExecutableTask, target: &Target) -> i32 {
+    fn run(&self, command: &ExecutableTask, target: &Target, dry_run: bool) -> i32 {
         // Connect to the local SSH server
         let tcp = TcpStream::connect(format!("{}:22", target.uri)).unwrap();
         let mut sess = Session::new().unwrap();
@@ -66,6 +73,7 @@ impl Transport for Ssh {
                 "A `provides` parameter was given, checking to see if {} exists on the remote",
                 provides
             );
+
             if let Err(error) = sess.scp_recv(&Path::new(&provides)) {
                 if error.code() == ssh2::ErrorCode::Session(-28) {
                     debug!(
@@ -91,6 +99,15 @@ impl Transport for Ssh {
         }
 
         if let Some(script) = command.task.script.as_bytes(Some(&command.parameters)) {
+            if dry_run {
+                println!("{}", "Dry-run\n----".yellow());
+                let mut out = std::io::stdout();
+                out.write(&script)
+                    .expect("Somehow failed to write to stdout");
+                println!("{}", "\n----".yellow());
+                return 0;
+            }
+
             let mut remote_file = sess
                 .scp_send(
                     Path::new(remote_script),
