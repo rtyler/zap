@@ -1,0 +1,13 @@
+task FreeBSDPkgInstall {
+    parameters {
+        packages {
+            required = true
+            help = 'One or more space delimited packages for pkg(8) to install'
+            type = string
+        }
+    }
+
+    script {
+        inline = 'pkg install -y {{packages}}'
+    }
+}

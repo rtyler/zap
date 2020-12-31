@@ -1,0 +1,13 @@
+task ZypperInstall {
+    parameters {
+        packages {
+            required = true
+            help = 'One or more space delimited packages for zypper(8) to install'
+            type = string
+        }
+    }
+
+    script {
+        inline = 'zypper in -y {{packages}}'
+    }
+}
