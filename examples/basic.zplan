@@ -4,10 +4,10 @@
  * It is expected to be run from the root of the project tree.
  */
 
-task "../tasks/echo.ztask" {
+task "tasks/echo.ztask" {
     msg = "Hello from the wonderful world of zplans!"
 }
 
-task "../tasks/echo.ztask" {
-    msg = "This can actually take inline shells too: $(date)"
+task "tasks/echo.ztask" {
+    msg = "This is nice"
 }

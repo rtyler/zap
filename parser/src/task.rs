@@ -8,9 +8,10 @@ use std::path::PathBuf;
 #[grammar = "task.pest"]
 struct TaskParser;
 
+#[derive(Clone, Debug)]
 pub struct Task {
     pub name: String,
-    inline: Option<String>,
+    pub inline: Option<String>,
 }
 
 impl Task {
@@ -67,12 +68,13 @@ impl Task {
                 _ => {}
             }
         }
-        return Err(PestError::new_from_pos(
+
+        Err(PestError::new_from_pos(
             ErrorVariant::CustomError {
                 message: "Could not find a valid task definition".to_string(),
             },
             pest::Position::from_start(buf),
-        ));
+        ))
     }
 
     pub fn from_path(path: &PathBuf) -> Result<Self, PestError<Rule>> {
@@ -109,7 +111,6 @@ impl Task {
 /**
  * Parser utility function to fish out the _actual_ string value for something
  * that is looking like a string Rule
- *
  */
 fn parse_str(parser: &mut Pairs<Rule>) -> Result<String, PestError<Rule>> {
     while let Some(parsed) = parser.next() {

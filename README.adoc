@@ -12,141 +12,65 @@ Zap borrows ideas from
 link:https://puppet.com/docs/bolt/latest/bolt.html[Puppet Bolt]. but leaves
 some of the Puppet-based legacy from Bolt behind.
 
-
-== Goals
-
-* Support BSD and Linux with ease
-* Make creating a plan very easy,  including adding some simple logic
-* Explore tags-based task assignment
-* Pulll dependencies in through git-subtree or other, no inventing a new
-  package distribution mechanism
-
 == Examples
 
 [source]
 ----
-./target/debug/zap task tasks/echo.ztask -p msg="Hello World" -t zap-freebsd
+❯ zap task tasks/echo.ztask -p msg="Hello World" -t zap-freebsd
+Running task with: TaskOpts { task: "tasks/echo.ztask", parameter: ["msg=Hello World"], targets: "zap-freebsd" }
+Hello World
+
 ----
 
-
-== Sketches
-
-.install.ztask
 [source]
 ----
-/*
- * The FileSync should be an internal task type
- */
-task FileSync {
+❯ zap plan ./examples/basic.zplan -t zap-freebsd
+Running plan with: PlanOpts { plan: "./examples/basic.zplan", targets: "zap-freebsd" }
+Hello from the wonderful world of zplans!
+This is nice
+
+----
+
+=== Task
+
+A task is a simple container of some form of execution. Typically this will be
+a wrapped shell/ruby/python script which does some specific piece of
+functionality. Tasks may also take parameters, which allow for some
+pluggability of new values.
+
+.echo.ztask
+[source]
+---
+task Echo {
     parameters {
-        localfile {
+        msg {
+            required = true
+            help = "String to echo back to the client"
             type = string
-            help = "Path on the local system for the file to sync"
-            required = true
-        }
-        remotefile {
-            type = "string"
-            help = "Path on the remote system for the file"
-            required = true
         }
     }
-}
 
-// Sketch of a user-defined  task
-task Install {
-    // The restrict block is a collection of expressions which ensure that the
-    // task is not run anywhere it cannot run. Will fail if it's tried to run
-    // somewhere it cannot be run
-    restrict {
-        // Regular expression to define what 
-        match_fact("platform", "(.*)-freebsd")
-        match_fact("hostname", "www1")
-    }
-
-    parameters {
-        package {
-            type = string
-            help = 'The package to be installed'
-            required = true
-        }
-
-        // Unless should be implied on every task
-        unless {
-            type = string
-            help = "Script which when returns zero if the package has been installed, i.e. `test -f /usr/bin/nginx`"
-        }
-        // provides should be implied on every task
-    }
-
-    // Parameters exposed as environment variables
-    // including the "ZAP_NOOP" variable which will be set if the script should
-    // be run in noop
     script {
-        // either the file or the inline must be defined
-        file = "path/to/file/in/tree"
-        // When using `program`, the task should expect to find:
-        // command-name_x86_64-unknown-linux-gnu
-        program = "/path/to/exes/in/tree"
-        inline = """
-        """
-    }
-}
-
-
-/ Exploring module syntax for namespacing these */
-module Install {
-    task Pkg {
-        restrict {}
-        parameters {}
-        script {}
-    }
-
-    task Zypper {
-        restrict {}
-        parameters {}
-        script {}
+        inline = "echo {{msg}}"
     }
 }
 ----
 
-.Sketch of a zplan
+=== Plan
+
+A plan is a collection of tasks which can be applied to a target or targets.
+Tasks are referenced with the parameters that should be passed into them, and
+will be executed in the order that they are defined.
+
+
+.simple.zplan
 [source]
 ----
-// Should things be just done proceduraly?
-
-task("sync-tree.ztask") { }
-
-task('tasks/install.ztask') {
-  name = "install-nginx"
-  package = "nginx"
-  unless = "test -f /usr/bin/nginx"
+task "tasks/echo.ztask" {
+    msg = "Hello from the wonderful world of zplans!"
 }
 
-
-// Run another plan from within this plan (supdawg)
-plan("plans/prepare-website.zplan") {
-  // What parameters make sense here?
-}
-
-
-// Relationships between tasks, option A
-task('tasks/sync-tree.zplan') {
-    source = './foo'
-    destination = '/'
-
-    then = ["install-nginx"]
-}
-
-// Relationships between tasks, option B
-task('tasks/sync-tree.zplan') {
-    source = './foo'
-    destination = '/'
-
-    then {
-        task("tasks/install.ztask") {
-            package = "nginx"
-            unless = "test -f /usr/bin/nginx"
-        }
-    }
+task "tasks/echo.ztask" {
+    msg = "This is nice"
 }
 ----

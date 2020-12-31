@@ -10,6 +10,7 @@ mod transport;
 
 use crate::inventory::*;
 use crate::transport::ssh::Ssh;
+use zap_parser::plan::Plan;
 use zap_parser::task::Task;
 
 fn main() {
@@ -42,6 +43,50 @@ fn main() {
  * This function will parse and execute a plan
  */
 fn handle_plan(opts: PlanOpts, runner: &dyn crate::transport::Transport, inventory: Inventory) {
+    println!("{}", format!("Running plan with: {:?}", opts).green());
+    let mut exit: i32 = -1;
+
+    match Plan::from_path(&opts.plan) {
+        Ok(plan) => {
+            info!("Plan located, preparing to execute");
+            for task in plan.tasks {
+                info!("Running executable task: {:?}", task);
+                exit = execute_task_on(
+                    opts.targets.clone(),
+                    &task.task,
+                    &task.parameters,
+                    runner,
+                    &inventory,
+                );
+            }
+        }
+        Err(err) => {
+            println!("Failed to load plan: {:?}", err);
+        }
+    }
+    std::process::exit(exit);
+}
+
+fn execute_task_on(
+    targets: String,
+    task: &Task,
+    parameters: &HashMap<String, String>,
+    runner: &dyn crate::transport::Transport,
+    inventory: &Inventory,
+) -> i32 {
+    if let Some(script) = task.get_script() {
+        let command = render_command(&script, &parameters);
+
+        if let Some(group) = inventory.groups.iter().find(|g| g.name == targets) {
+            return runner.run_group(&command, &group, &inventory);
+        }
+
+        if let Some(target) = inventory.targets.iter().find(|t| t.name == targets) {
+            return runner.run(&command, &target);
+        }
+    }
+    error!("Failed to locate a script to execute for the task!");
+    return -1;
 }
 
 /**
@@ -65,23 +110,17 @@ fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, invento
                     parameters.insert(parts[0].to_string(), parts[1].to_string());
                 }
             }
-
-            if let Some(script) = task.get_script() {
-                let command = render_command(&script, &parameters);
-
-                // TODO: refactor with handle_cmd
-                if let Some(group) = inventory.groups.iter().find(|g| g.name == opts.targets) {
-                    std::process::exit(runner.run_group(&command, &group, &inventory));
-                }
-
-                if let Some(target) = inventory.targets.iter().find(|t| t.name == opts.targets) {
-                    std::process::exit(runner.run(&command, &target));
-                }
-            }
-        },
+            std::process::exit(execute_task_on(
+                opts.targets,
+                &task,
+                &parameters,
+                runner,
+                &inventory,
+            ));
+        }
         Err(err) => {
             println!("Failed to load task: {:?}", err);
-        },
+        }
     }
 }
 
@@ -96,19 +135,16 @@ fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, invento
  * non-zero.
  */
 fn handle_cmd(opts: CmdOpts, runner: &dyn crate::transport::Transport, inventory: Inventory) {
-    if let Some(group) = inventory.groups.iter().find(|g| g.name == opts.targets) {
-        std::process::exit(runner.run_group(&opts.command, &group, &inventory));
-    }
-
-    if let Some(target) = inventory.targets.iter().find(|t| t.name == opts.targets) {
-        println!("{}", format!("run a command: {:?}", opts).green());
-        std::process::exit(runner.run(&opts.command, &target));
-    }
-
-    println!(
-        "{}",
-        format!("Couldn't find a target named `{}`", opts.targets).red()
-    );
+    let mut task = Task::new("Dynamic");
+    task.inline = Some(opts.command);
+    let parameters = HashMap::new();
+    std::process::exit(execute_task_on(
+        opts.targets,
+        &task,
+        &parameters,
+        runner,
+        &inventory,
+    ));
 }
 
 /**
