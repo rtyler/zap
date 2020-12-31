@@ -82,7 +82,32 @@ impl Transport for Ssh {
             let mut channel = sess.channel_session().unwrap();
             let stderr = channel.stderr();
 
-            channel.exec(&format!("./{}", remote_script)).unwrap();
+            if command.task.script.has_file() {
+                let args = serde_json::to_string(&command.parameters)
+                    .expect("Failed to serialize parameters for task");
+                let args_file = "._zap_args.json";
+                let mut remote_file = sess
+                    .scp_send(
+                        Path::new(args_file),
+                        0o400,
+                        args.len().try_into().expect(
+                            "Failed converting the size of the generated args file, yikes!",
+                        ),
+                        None,
+                    )
+                    .unwrap();
+                remote_file.write(&args.as_bytes()).unwrap();
+                // Close the channel and wait for the whole content to be tranferred
+                remote_file.send_eof().unwrap();
+                remote_file.wait_eof().unwrap();
+                remote_file.close().unwrap();
+                remote_file.wait_close().unwrap();
+                channel
+                    .exec(&format!("./{} {}", remote_script, args_file))
+                    .unwrap();
+            } else {
+                channel.exec(&format!("./{}", remote_script)).unwrap();
+            }
 
             let reader = BufReader::new(stderr);
             for line in reader.lines() {

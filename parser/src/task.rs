@@ -41,6 +41,10 @@ impl Script {
         }
     }
 
+    pub fn has_file(&self) -> bool {
+        self.file.is_some()
+    }
+
     /**
      * Return the script's contents as bytes
      *
