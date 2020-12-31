@@ -15,5 +15,9 @@ task 'tasks/echo.ztask' {
 task 'tasks/shell/bash.ztask' {
     script = '''
         ls -lah
+        touch foo
     '''
+
+    // Don't run again if the foo file is present
+    provides = 'foo'
 }

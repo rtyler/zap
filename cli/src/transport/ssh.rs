@@ -59,6 +59,36 @@ impl Transport for Ssh {
         }
 
         let remote_script = "._zap_command";
+        let args_file = "._zap_args.json";
+
+        if let Some(provides) = &command.parameters.get("provides") {
+            debug!(
+                "A `provides` parameter was given, checking to see if {} exists on the remote",
+                provides
+            );
+            if let Err(error) = sess.scp_recv(&Path::new(&provides)) {
+                if error.code() == ssh2::ErrorCode::Session(-28) {
+                    debug!(
+                        "The provided file ({}) does not exist, the command should be run",
+                        provides
+                    );
+                } else {
+                    error!(
+                        "A failure occurred while trying to check the provided file: {:?}",
+                        error
+                    );
+                    return -1;
+                }
+            } else {
+                // If we successfully fetched the provided file, then we should
+                // return 0 and skip the function
+                debug!(
+                    "The provided file ({}) was found, avoiding re-running",
+                    provides
+                );
+                return 0;
+            }
+        }
 
         if let Some(script) = command.task.script.as_bytes(Some(&command.parameters)) {
             let mut remote_file = sess
@@ -85,7 +115,6 @@ impl Transport for Ssh {
             if command.task.script.has_file() {
                 let args = serde_json::to_string(&command.parameters)
                     .expect("Failed to serialize parameters for task");
-                let args_file = "._zap_args.json";
                 let mut remote_file = sess
                     .scp_send(
                         Path::new(args_file),
@@ -126,7 +155,9 @@ impl Transport for Ssh {
              * out and remove a file
              */
             let mut channel = sess.channel_session().unwrap();
-            channel.exec(&format!("rm -f {}", remote_script)).unwrap();
+            channel
+                .exec(&format!("rm -f {} {}", remote_script, args_file))
+                .unwrap();
             return exit;
         } else {
             error!("No script available to run for task!");
