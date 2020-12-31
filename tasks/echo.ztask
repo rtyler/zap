@@ -6,6 +6,7 @@ task Echo {
             type = string
         }
     }
+
     script {
         inline = "echo {{msg}}"
     }

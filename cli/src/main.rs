@@ -3,6 +3,7 @@ use gumdrop::Options;
 use log::*;
 use std::collections::HashMap;
 use std::io::BufReader;
+use std::path::PathBuf;
 
 mod inventory;
 mod transport;
@@ -36,32 +37,15 @@ fn main() {
     }
 }
 
-fn load_ztasks() -> Vec<Task> {
-    use glob::glob;
-    let mut tasks = vec![];
-
-    for entry in glob("tasks/**/*.ztask").expect("Failed to read glob pattern") {
-        match entry {
-            Ok(path) => {
-                if let Ok(task) = Task::from_path(&path) {
-                    info!("loaded ztask: {}", task.name);
-                    tasks.push(task);
-                }
-            }
-            Err(e) => println!("{:?}", e),
-        }
-    }
-    tasks
-}
-
 /**
  * This function will handle a task
  */
 fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, inventory: Inventory) {
     println!("running task: {:?}", opts);
 
-    for task in load_ztasks() {
-        if task.name == opts.task {
+    match Task::from_path(&opts.task) {
+        Ok(task) => {
+            info!("Task located, preparing to execute");
             let mut parameters = HashMap::new();
 
             /*
@@ -87,7 +71,10 @@ fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, invento
                     std::process::exit(runner.run(&command, &target));
                 }
             }
-        }
+        },
+        Err(err) => {
+            println!("Failed to load task: {:?}", err);
+        },
     }
 }
 
@@ -189,7 +176,7 @@ struct CmdOpts {
 #[derive(Debug, Options)]
 struct TaskOpts {
     #[options(free, help = "Task to execute, must exist in ZAP_PATH")]
-    task: String,
+    task: PathBuf,
     #[options(short = "p", help = "Parameter values")]
     parameter: Vec<String>,
     #[options(help = "Name of a target or group")]
