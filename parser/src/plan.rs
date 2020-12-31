@@ -138,10 +138,16 @@ fn parse_str(parser: &mut Pairs<Rule>) -> Result<String, PestError<Rule>> {
             Rule::string => {
                 return parse_str(&mut parsed.into_inner());
             }
+            Rule::triple_quoted => {
+                return parse_str(&mut parsed.into_inner());
+            }
             Rule::single_quoted => {
                 return parse_str(&mut parsed.into_inner());
             }
             Rule::inner_single_str => {
+                return Ok(parsed.as_str().to_string());
+            }
+            Rule::inner_triple_str => {
                 return Ok(parsed.as_str().to_string());
             }
             _ => {}
