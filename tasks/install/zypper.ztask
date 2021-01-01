@@ -1,3 +1,7 @@
+/*
+ * Invoke zypper install on a openSUSE/SLES target
+ */
+
 task ZypperInstall {
     parameters {
         packages {

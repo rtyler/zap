@@ -1,3 +1,7 @@
+/*
+ * The sh task is a simple passthrough to /bin/sh on the target machine
+ */
+
 task Sh {
     parameters {
         script {

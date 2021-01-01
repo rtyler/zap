@@ -1,3 +1,8 @@
+/*
+ * The echo test takes a string and just uses the shell `echo` on the target
+ * to echo it back
+ */
+
 task Echo {
     parameters {
         msg {

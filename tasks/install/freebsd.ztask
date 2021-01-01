@@ -1,3 +1,7 @@
+/*
+ * Invoke pkg-install(8) on the FreeBSD machine
+ */
+
 task FreeBSDPkgInstall {
     parameters {
         packages {

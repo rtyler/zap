@@ -1,3 +1,10 @@
+/*
+ * The bash task is a simple passthrough to bash.
+ *
+ * Since bash is not guaranteed to be in the same location on every machine
+ * This relies on /usr/bin/env to help find bash in the $PATH on the target
+ */
+
 task Bash {
     parameters {
         script {
