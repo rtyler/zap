@@ -86,8 +86,9 @@ impl Script {
 
             let parameters = parameters.unwrap();
 
-            let handlebars = Handlebars::new();
-            match handlebars.render_template(inline, &parameters) {
+            let mut hb = Handlebars::new();
+            hb.register_escape_fn(handlebars::no_escape);
+            match hb.render_template(inline, &parameters) {
                 Ok(rendered) => {
                     return Some(rendered.as_bytes().to_vec());
                 }
