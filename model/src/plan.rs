@@ -6,21 +6,11 @@ use pest::Parser;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::ExecutableTask;
+
 #[derive(Parser)]
 #[grammar = "plan.pest"]
 struct PlanParser;
-
-#[derive(Clone, Debug)]
-pub struct ExecutableTask {
-    pub task: crate::task::Task,
-    pub parameters: HashMap<String, String>,
-}
-
-impl ExecutableTask {
-    pub fn new(task: crate::task::Task, parameters: HashMap<String, String>) -> Self {
-        Self { task, parameters }
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct Plan {
