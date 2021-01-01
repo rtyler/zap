@@ -18,6 +18,7 @@ pub trait Transport {
     fn disconnect(&mut self);
     fn file_exists(&self, path: &Path) -> Result<bool, TransportError>;
     fn run(&mut self, command: &ExecutableTask, target: &Target, dry_run: bool) -> i32;
+    fn run_script(&mut self, script: &str) -> i32;
     fn run_group(
         &mut self,
         cmd: &ExecutableTask,

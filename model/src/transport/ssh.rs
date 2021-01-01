@@ -12,6 +12,8 @@ use std::io::BufReader;
 use std::net::TcpStream;
 use std::path::Path;
 
+const REMOTE_SCRIPT: &str = "._zap_command";
+
 #[derive(Clone)]
 pub struct Ssh {
     session: Session,
@@ -112,6 +114,23 @@ impl Transport for Ssh {
         return Ok(false);
     }
 
+    /**
+     * run_script will copy the given string over and execute it
+     */
+    fn run_script(&mut self, script: &str) -> i32 {
+        if self.send_bytes(Path::new(REMOTE_SCRIPT), &script.as_bytes().to_vec(), 0o700) {
+            let mut channel = self.session.channel_session().unwrap();
+            channel.exec(&format!("./{}", REMOTE_SCRIPT));
+
+            let mut s = String::new();
+            channel.read_to_string(&mut s).unwrap();
+            print!("{}", s);
+            channel.wait_close().expect("Failed to close the channel");
+            return channel.exit_status().unwrap();
+        }
+        return -10;
+    }
+
     fn run(&mut self, command: &ExecutableTask, target: &Target, dry_run: bool) -> i32 {
         if !self.connect(target) {
             error!("Failed to connect to {:?}", target);
@@ -134,23 +153,11 @@ impl Transport for Ssh {
             }
         }
 
-        let remote_script = "._zap_command";
-        let args_file = "._zap_args.json";
-
         if let Some(unless) = &command.parameters.get("unless") {
             debug!("An `unless` parameter was given, running {}", unless);
-            if self.send_bytes(Path::new(remote_script), &unless.as_bytes().to_vec(), 0o700) {
-                let mut channel = self.session.channel_session().unwrap();
-                channel.exec(&format!("./{}", remote_script));
-                let mut s = String::new();
-                channel.read_to_string(&mut s).unwrap();
-                print!("{}", s);
-                channel.wait_close().expect("Failed to close the channel");
-                let exit = channel.exit_status().unwrap();
-                if exit == 0 {
-                    debug!("Unless script returned success, so bailing out early");
-                    return 0;
-                }
+            if 0 == self.run_script(unless) {
+                debug!("`unless` script returned 0, skipping the task");
+                return 0;
             }
         }
 
@@ -164,27 +171,28 @@ impl Transport for Ssh {
                 return 0;
             }
 
-            if !self.send_bytes(Path::new(remote_script), &script, 0o700) {
+            if !self.send_bytes(Path::new(REMOTE_SCRIPT), &script, 0o700) {
                 error!("Failed to upload script file for execution");
                 return -1;
             }
 
             let mut channel = self.session.channel_session().unwrap();
             let stderr = channel.stderr();
+            let args_file = "._zap_args.json";
 
             if command.task.script.has_file() {
                 let args = serde_json::to_string(&command.parameters)
                     .expect("Failed to serialize parameters for task");
                 if self.send_bytes(Path::new(args_file), &args.into_bytes(), 0o400) {
                     channel
-                        .exec(&format!("./{} {}", remote_script, args_file))
+                        .exec(&format!("./{} {}", REMOTE_SCRIPT, args_file))
                         .unwrap();
                 } else {
                     error!("Failed to upload the arguments file");
                     return -1;
                 }
             } else {
-                channel.exec(&format!("./{}", remote_script)).unwrap();
+                channel.exec(&format!("./{}", REMOTE_SCRIPT)).unwrap();
             }
 
             let reader = BufReader::new(stderr);
@@ -205,7 +213,7 @@ impl Transport for Ssh {
              */
             let mut channel = self.session.channel_session().unwrap();
             channel
-                .exec(&format!("rm -f {} {}", remote_script, args_file))
+                .exec(&format!("rm -f {} {}", REMOTE_SCRIPT, args_file))
                 .unwrap();
             return exit;
         } else {
