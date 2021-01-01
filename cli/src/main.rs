@@ -10,8 +10,8 @@ mod transport;
 
 use crate::inventory::*;
 use crate::transport::ssh::Ssh;
-use zap_parser::plan::{ExecutableTask, Plan};
-use zap_parser::task::Task;
+use zap_model::plan::{ExecutableTask, Plan};
+use zap_model::task::Task;
 
 fn main() {
     pretty_env_logger::init();

@@ -10,7 +10,7 @@ use std::io::BufReader;
 use std::net::TcpStream;
 use std::path::Path;
 
-use zap_parser::plan::ExecutableTask;
+use zap_model::plan::ExecutableTask;
 
 #[derive(Clone)]
 pub struct Ssh {

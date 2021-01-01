@@ -619,11 +619,11 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "ssh2",
- "zap-parser",
+ "zap-model",
 ]
 
 [[package]]
-name = "zap-parser"
+name = "zap-model"
 version = "0.1.0"
 dependencies = [
  "handlebars",

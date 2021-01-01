@@ -1,6 +1,6 @@
 use crate::inventory::{Group, Inventory, Target};
 use std::path::Path;
-use zap_parser::plan::ExecutableTask;
+use zap_model::plan::ExecutableTask;
 
 pub mod ssh;
 
