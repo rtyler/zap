@@ -162,7 +162,7 @@ impl Task {
     }
 
     pub fn from_str(buf: &str) -> Result<Self, PestError<Rule>> {
-        let mut parser = TaskParser::parse(Rule::task, buf)?;
+        let mut parser = TaskParser::parse(Rule::taskfile, buf)?;
         while let Some(parsed) = parser.next() {
             match parsed.as_rule() {
                 Rule::task => {
@@ -245,6 +245,22 @@ fn parse_str(parser: &mut Pairs<Rule>) -> Result<String, PestError<Rule>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn parse_task_with_comments() {
+        let buf = r#"
+        /*
+         * This is a simple one
+         */
+        task Hey {
+                script {
+                    inline = 'echo "hi"'
+                }
+            }"#;
+        let _task = TaskParser::parse(Rule::taskfile, buf)
+            .unwrap()
+            .next()
+            .unwrap();
+    }
 
     #[test]
     fn parse_simple_script_task() {
