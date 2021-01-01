@@ -1,5 +1,7 @@
 use crate::inventory::{Group, Inventory, Target};
 use crate::transport::Transport;
+use crate::ExecutableTask;
+
 use colored::*;
 
 use log::*;
@@ -9,8 +11,6 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::net::TcpStream;
 use std::path::Path;
-
-use zap_model::ExecutableTask;
 
 #[derive(Clone)]
 pub struct Ssh {

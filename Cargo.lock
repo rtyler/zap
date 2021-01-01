@@ -608,26 +608,29 @@ dependencies = [
 
 [[package]]
 name = "zap-cli"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "colored",
  "gumdrop",
  "log",
  "pretty_env_logger",
  "serde",
- "serde_derive",
- "serde_json",
  "serde_yaml",
- "ssh2",
  "zap-model",
 ]
 
 [[package]]
 name = "zap-model"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
+ "colored",
  "handlebars",
  "log",
  "pest",
  "pest_derive",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "serde_yaml",
+ "ssh2",
 ]
