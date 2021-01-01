@@ -1,0 +1,15 @@
+/*
+ * This plan will set up an nginx server on a FreeBSD machine
+ */
+
+
+task 'tasks/install/freebsd.ztask' {
+    packages = 'nginx'
+    provides = '/usr/local/sbin/nginx'
+}
+
+
+task 'tasks/shell/sh.ztask' {
+    script = 'sysrc nginx_enable="YES"'
+}
+

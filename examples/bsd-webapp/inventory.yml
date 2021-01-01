@@ -1,0 +1,15 @@
+groups:
+- name: bsd
+  targets:
+    - zap-freebsd
+
+targets:
+  - name: zap-freebsd
+    uri: 192.168.1.224
+    config:
+      ssh:
+        user: root
+        password: root
+
+config:
+  transport: ssh
