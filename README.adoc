@@ -48,6 +48,9 @@ definitions.
 | `provides`
 | A relative or absolute path to a file that the task provides. If the file exists, then the task will be skipped.
 
+| `unless`
+| A script snippet which can determine whether the task should execute. A non-zero exit status causes the task to execute.
+
 |===
 
 .echo.ztask

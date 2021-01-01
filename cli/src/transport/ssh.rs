@@ -113,12 +113,25 @@ impl Transport for Ssh {
             }
         }
 
-        if let Some(unless) = &command.parameters.get("unless") {
-            debug!("An `unless` parameter was given, running {}", unless);
-        }
-
         let remote_script = "._zap_command";
         let args_file = "._zap_args.json";
+
+        if let Some(unless) = &command.parameters.get("unless") {
+            debug!("An `unless` parameter was given, running {}", unless);
+            if self.send_bytes(Path::new(remote_script), &unless.as_bytes().to_vec(), 0o700) {
+                let mut channel = self.session.channel_session().unwrap();
+                channel.exec(&format!("./{}", remote_script));
+                let mut s = String::new();
+                channel.read_to_string(&mut s).unwrap();
+                print!("{}", s);
+                channel.wait_close().expect("Failed to close the channel");
+                let exit = channel.exit_status().unwrap();
+                if exit == 0 {
+                    debug!("Unless script returned success, so bailing out early");
+                    return 0;
+                }
+            }
+        }
 
         if let Some(script) = command.task.script.as_bytes(Some(&command.parameters)) {
             if dry_run {
