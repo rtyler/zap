@@ -1,6 +1,6 @@
 use crate::inventory::{Group, Inventory, Target};
 use crate::transport::Transport;
-use crate::ExecutableTask;
+use crate::{ExecutableTask, TransportError};
 
 use colored::*;
 
@@ -90,6 +90,28 @@ impl Transport for Ssh {
         true
     }
 
+    fn file_exists(&self, path: &Path) -> Result<bool, TransportError> {
+        if let Err(error) = self.session.scp_recv(path) {
+            if error.code() == ssh2::ErrorCode::Session(-28) {
+                debug!("The file ({}) does not exist", path.display());
+            } else {
+                error!(
+                    "A failure occurred while trying to check a file exists: {:?}",
+                    error
+                );
+                return Err(TransportError::GeneralError(
+                    "Failed to check that file exists".into(),
+                ));
+            }
+        } else {
+            // If we successfully fetched the provided file, then we should
+            // return 0 and skip the function
+            trace!("The file exists: {}", path.display());
+            return Ok(true);
+        }
+        return Ok(false);
+    }
+
     fn run(&mut self, command: &ExecutableTask, target: &Target, dry_run: bool) -> i32 {
         if !self.connect(target) {
             error!("Failed to connect to {:?}", target);
@@ -102,27 +124,13 @@ impl Transport for Ssh {
                 provides
             );
 
-            if let Err(error) = self.session.scp_recv(&Path::new(&provides)) {
-                if error.code() == ssh2::ErrorCode::Session(-28) {
-                    debug!(
-                        "The provided file ({}) does not exist, the command should be run",
-                        provides
-                    );
-                } else {
-                    error!(
-                        "A failure occurred while trying to check the provided file: {:?}",
-                        error
-                    );
-                    return -1;
+            if let Ok(found) = self.file_exists(Path::new(provides)) {
+                if found {
+                    debug!("File {} exists, skipping task", provides);
+                    return 0;
                 }
             } else {
-                // If we successfully fetched the provided file, then we should
-                // return 0 and skip the function
-                debug!(
-                    "The provided file ({}) was found, avoiding re-running",
-                    provides
-                );
-                return 0;
+                return -1;
             }
         }
 
