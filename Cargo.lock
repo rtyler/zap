@@ -607,7 +607,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "zap"
+name = "zap-cli"
 version = "0.1.0"
 dependencies = [
  "colored",
