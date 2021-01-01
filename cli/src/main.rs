@@ -7,8 +7,8 @@ use std::path::PathBuf;
 
 use zap_model::inventory::Inventory;
 use zap_model::transport::ssh::Ssh;
-use zap_model::{Plan, Task, Transport};
 use zap_model::ExecutableTask;
+use zap_model::{Plan, Task, Transport};
 
 fn main() {
     pretty_env_logger::init();

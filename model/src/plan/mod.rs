@@ -35,7 +35,9 @@ impl Plan {
                     for pair in parsed.into_inner() {
                         match pair.as_rule() {
                             Rule::string => {
-                                let path = PathBuf::from(parse_str(&mut pair.into_inner())?);
+                                let name = parse_str(&mut pair.into_inner())?;
+                                // The .ztask extension is to be omitted in task declarations
+                                let path = PathBuf::from(format!("{}.ztask", name));
 
                                 match crate::task::Task::from_path(&path) {
                                     Ok(task) => raw_task = Some(task),
@@ -164,11 +166,11 @@ mod tests {
  * It is expected to be run from the root of the project tree.
  */
 
-task '../tasks/echo.ztask' {
+task '../tasks/echo' {
     msg = 'Hello from the wonderful world of zplans!'
 }
 
-task '../tasks/echo.ztask' {
+task '../tasks/echo' {
     msg = 'This can actually take inline shells too: $(date)'
 }"#;
         let _plan = PlanParser::parse(Rule::planfile, buf)
@@ -179,11 +181,11 @@ task '../tasks/echo.ztask' {
 
     #[test]
     fn parse_plan_fn() {
-        let buf = r#"task '../tasks/echo.ztask' {
+        let buf = r#"task '../tasks/echo' {
                         msg = 'Hello from the wonderful world of zplans!'
                     }
 
-                    task '../tasks/echo.ztask' {
+                    task '../tasks/echo' {
                         msg = 'This can actually take inline shells too: $(date)'
                     }"#;
         let plan = Plan::from_str(buf).expect("Failed to parse the plan");

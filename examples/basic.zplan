@@ -4,17 +4,17 @@
  * It is expected to be run from the root of the project tree.
  */
 
-task 'tasks/echo.ztask' {
+task 'tasks/echo' {
     msg = 'Hello from the wonderful world of zplans!'
 }
 
-task 'tasks/echo.ztask' {
+task 'tasks/echo' {
     msg = 'This is nice'
 }
 
-task 'tasks/shell/bash.ztask' {
+task 'tasks/shell/bash' {
     script = '''
-        ls -lah
+        ls
         touch foo
     '''
 

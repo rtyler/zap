@@ -139,11 +139,11 @@ will be executed in the order that they are defined.
 .simple.zplan
 [source]
 ----
-task 'tasks/echo.ztask' {
+task 'tasks/echo' {
     msg = 'Hello from the wonderful world of zplans!'
 }
 
-task 'tasks/echo.ztask' {
+task 'tasks/echo' {
     msg = 'This is nice'
 }
 

@@ -11,9 +11,9 @@ pub mod task;
 pub mod tasks;
 pub mod transport;
 
-pub use crate::transport::Transport;
 pub use crate::plan::Plan;
 pub use crate::task::Task;
+pub use crate::transport::Transport;
 
 /**
  * An ExecutableTask is a light container over a Task execpt with user-provided information and is

@@ -1,5 +1,5 @@
-use crate::ExecutableTask;
 use crate::inventory::{Group, Inventory, Target};
+use crate::ExecutableTask;
 
 use std::path::Path;
 
