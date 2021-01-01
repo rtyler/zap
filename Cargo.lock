@@ -608,7 +608,7 @@ dependencies = [
 
 [[package]]
 name = "zap-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "colored",
  "gumdrop",
@@ -624,7 +624,7 @@ dependencies = [
 
 [[package]]
 name = "zap-model"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "handlebars",
  "log",

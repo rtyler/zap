@@ -1,6 +1,6 @@
 [package]
 name = "zap-cli"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 description = "A simple configuration management and orchestration tool"

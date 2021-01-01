@@ -40,18 +40,31 @@ impl Transport for Ssh {
             // XXX: This is inefficient
             for target in inventory.targets.iter() {
                 if &target.name == target_name {
-                    println!("Running on `{}`", target.name);
+                    println!("Running on `{}` {}", target.name, target.uri);
                     status = self.run(command, &target, dry_run);
+                    self.disconnect();
                 }
             }
         }
         status
     }
 
+    fn disconnect(&mut self) {
+        debug!("Disconnecting");
+        if self.connected {
+            self.session.disconnect(None, "Zappidy doo-da", None);
+            // There doesn't seem to be any cleaner way to close other than
+            //.just dropping the session
+            self.session = Session::new().unwrap();
+        }
+        self.connected = false;
+    }
+
     fn connect(&mut self, target: &Target) -> bool {
         if self.connected {
             return self.connected;
         }
+        debug!("Connecting to {}", target.uri);
         let tcp = TcpStream::connect(format!("{}:22", target.uri)).unwrap();
         self.session.set_tcp_stream(tcp);
         self.session.handshake().unwrap();

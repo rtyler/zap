@@ -56,6 +56,19 @@ Once this has been set up, you can run:
 zap plan hello.zplan -t alpha --dry-run
 ----
 
+== Command Line
+
+The `zap` command line interface has a number of subcommands that can help with
+the development and deployment of tasks and plans.
+
+=== cmd
+
+=== check
+
+=== plan
+
+=== task
+
 
 == Examples
 

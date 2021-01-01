@@ -10,6 +10,7 @@ pub mod ssh;
  */
 pub trait Transport {
     fn connect(&mut self, target: &Target) -> bool;
+    fn disconnect(&mut self);
     fn run_group(
         &mut self,
         cmd: &ExecutableTask,
