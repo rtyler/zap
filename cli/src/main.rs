@@ -27,14 +27,14 @@ fn main() {
     let reader = BufReader::new(file);
     let inventory: Inventory = serde_yaml::from_reader(reader).expect("Failed to read intenvory");
 
-    let runner = match &inventory.config.transport {
+    let mut runner = match &inventory.config.transport {
         crate::inventory::Transport::Ssh => Ssh::default(),
     };
 
     match opts.command.unwrap() {
-        Command::Cmd(opts) => handle_cmd(opts, &runner, inventory),
-        Command::Task(opts) => handle_task(opts, &runner, inventory),
-        Command::Plan(opts) => handle_plan(opts, &runner, inventory),
+        Command::Cmd(opts) => handle_cmd(opts, &mut runner, inventory),
+        Command::Task(opts) => handle_task(opts, &mut runner, inventory),
+        Command::Plan(opts) => handle_plan(opts, &mut runner, inventory),
         Command::Check(opts) => handle_check(opts),
         _ => {}
     }
@@ -62,7 +62,7 @@ fn handle_check(opts: CheckOpts) {
 /**
  * This function will parse and execute a plan
  */
-fn handle_plan(opts: PlanOpts, runner: &dyn crate::transport::Transport, inventory: Inventory) {
+fn handle_plan(opts: PlanOpts, runner: &mut dyn crate::transport::Transport, inventory: Inventory) {
     println!("{}", format!("Running plan with: {:?}", opts).green());
     let mut exit: i32 = -1;
 
@@ -90,7 +90,7 @@ fn handle_plan(opts: PlanOpts, runner: &dyn crate::transport::Transport, invento
 fn execute_task_on(
     targets: String,
     task: &ExecutableTask,
-    runner: &dyn crate::transport::Transport,
+    runner: &mut dyn crate::transport::Transport,
     inventory: &Inventory,
     dry_run: bool,
 ) -> i32 {
@@ -108,7 +108,7 @@ fn execute_task_on(
 /**
  * This function will handle a task
  */
-fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, inventory: Inventory) {
+fn handle_task(opts: TaskOpts, runner: &mut dyn crate::transport::Transport, inventory: Inventory) {
     println!("{}", format!("Running task with: {:?}", opts).green());
 
     match Task::from_path(&opts.task) {
@@ -153,7 +153,7 @@ fn handle_task(opts: TaskOpts, runner: &dyn crate::transport::Transport, invento
  * In the case of multiple targets, any non-zero status code will be used to exit
  * non-zero.
  */
-fn handle_cmd(opts: CmdOpts, runner: &dyn crate::transport::Transport, inventory: Inventory) {
+fn handle_cmd(opts: CmdOpts, runner: &mut dyn crate::transport::Transport, inventory: Inventory) {
     let mut task = ExecutableTask::new(Task::new("Dynamic"), HashMap::new());
     task.task.script.inline = Some(opts.command);
     std::process::exit(execute_task_on(
