@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
+use url::Url;
 
 #[derive(Parser)]
 #[grammar = "task.pest"]
@@ -180,6 +181,28 @@ impl Task {
         ))
     }
 
+    pub fn from_url(url: &str) -> Result<Self, PestError<Rule>> {
+        if let Ok(url) = Url::parse(url) {
+            println!("UR: {:?}", url);
+            if let Some(name) = url.host_str() {
+                // XXX: Temporary hard-coding see #5
+                let mut task = Task::new(name);
+                assert_eq!(name, "sh");
+                // This is a hacky temporary workaround for now too
+                // a real builtin shouldn't need to bother with a handlebars template
+                task.script.inline = Some("#!/bin/sh\n{{script}}".into());
+                return Ok(task);
+            }
+        }
+
+        Err(PestError::new_from_pos(
+            ErrorVariant::CustomError {
+                message: "Could not find a valid task definition".to_string(),
+            },
+            pest::Position::from_start(url),
+        ))
+    }
+
     pub fn from_path(path: &PathBuf) -> Result<Self, PestError<Rule>> {
         match File::open(path) {
             Ok(mut file) => {
@@ -316,5 +339,11 @@ mod tests {
 
         let script = task.script;
         assert_eq!(script.as_bytes(None).unwrap(), "env".as_bytes());
+    }
+
+    #[test]
+    fn task_from_url() {
+        let task = Task::from_url("zap://sh").expect("Failed to load task from URL");
+        assert_eq!(task.name, "sh");
     }
 }

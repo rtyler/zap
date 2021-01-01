@@ -12,12 +12,8 @@ task 'tasks/echo' {
     msg = 'This is nice'
 }
 
-task 'tasks/shell/bash' {
+task 'zap://sh' {
     script = '''
-        ls
-        touch foo
+        pwd
     '''
-
-    // Don't run again if the foo file is present
-    provides = 'foo'
 }

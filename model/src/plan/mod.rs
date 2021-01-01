@@ -6,7 +6,7 @@ use pest::Parser;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use crate::ExecutableTask;
+use crate::{ExecutableTask, Task};
 
 #[derive(Parser)]
 #[grammar = "plan.pest"]
@@ -36,10 +36,15 @@ impl Plan {
                         match pair.as_rule() {
                             Rule::string => {
                                 let name = parse_str(&mut pair.into_inner())?;
-                                // The .ztask extension is to be omitted in task declarations
-                                let path = PathBuf::from(format!("{}.ztask", name));
+                                let task = match name.starts_with("zap://") {
+                                    true => Task::from_url(&name),
+                                    false => {
+                                        let path = PathBuf::from(format!("{}.ztask", name));
+                                        Task::from_path(&path)
+                                    }
+                                };
 
-                                match crate::task::Task::from_path(&path) {
+                                match task {
                                     Ok(task) => raw_task = Some(task),
                                     Err(err) => {
                                         error!("Failed to parse task: {:?}", err);
