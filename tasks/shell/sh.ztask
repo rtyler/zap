@@ -1,0 +1,15 @@
+task Sh {
+    parameters {
+        script {
+            required = true
+            help = 'A script to run via the /bin/sh'
+            type = string
+        }
+    }
+
+    script {
+        inline = '''#!/bin/sh
+            {{script}}
+        '''
+    }
+}
