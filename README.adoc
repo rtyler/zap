@@ -22,8 +22,8 @@ try you can install it via Rust's `cargo` command: `cargo install zap-cli`.
 cargo install zap-cli
 mkdir my-zap-project
 cd my-zap-project
-wget https://github.com/rtyler/zap/archive/v0.1.0.tar.gz
-tar -zxvf v0.1.0.tar.gz zap-0.1.0/tasks -C tasks --strip=1
+wget https://github.com/rtyler/zap/archive/v0.1.1.tar.gz
+tar -zxvf v0.1.1.tar.gz zap-0.1.1/tasks -C tasks --strip=1
 cat > hello.zplan <<EOF
 task 'tasks/echo.ztask' {
     msg = 'Show them my medal Kif'
