@@ -1,3 +1,5 @@
+:toc: macro
+
 = Zap
 
 A simple cross-platform orchestration and configuration management tool.
@@ -11,6 +13,8 @@ machine(s) and executed.
 Zap borrows ideas from
 link:https://puppet.com/docs/bolt/latest/bolt.html[Puppet Bolt]. but leaves
 some of the Puppet-based legacy from Bolt behind.
+
+toc::[]
 
 == Getting Started
 
@@ -148,3 +152,41 @@ task 'tasks/echo' {
 }
 
 ----
+
+== Built-in Tasks
+
+Zap comes with a number of tasks that are built into `zap` itself. These can be
+referenced in the task declarations in plans via the `zap://` URL.
+
+=== `sh`
+
+The `sh` task will execute the given script via `/bin/sh` on the target.
+
+.Example
+[source]
+----
+task 'zap://sh' {
+    script = '''
+        pwd
+        echo ${SHELL}
+    '''
+}
+----
+
+.Parameter
+|===
+| Name | Required | Description
+
+| `script`
+| yes
+| A shell script
+
+| `provides`
+| no
+| When this file is present indicates that the script should not be re-run
+
+| `unless`
+| no
+| When this script returns zero exit status, the script should not be re-run
+
+|==
