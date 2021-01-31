@@ -703,6 +703,7 @@ version = "0.2.0"
 dependencies = [
  "colored",
  "handlebars",
+ "lazy_static",
  "log",
  "pest",
  "pest_derive",

@@ -9,6 +9,16 @@ use std::io::Read;
 use std::path::PathBuf;
 use url::Url;
 
+struct NativeTask {
+}
+
+lazy_static! {
+    static ref REGISTRY: HashMap<String, NativeTask> = {
+        let mut m = HashMap::new();
+        m
+    };
+}
+
 #[derive(Parser)]
 #[grammar = "task.pest"]
 struct TaskParser;
@@ -102,6 +112,10 @@ impl Script {
 
         None
     }
+}
+
+trait Tasq {
+    fn name() -> String;
 }
 
 #[derive(Clone, Debug)]
