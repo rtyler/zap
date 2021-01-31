@@ -12,7 +12,6 @@ keywords = ["sysadmin", "management"]
 [dependencies]
 colored = "2"
 handlebars = "~3.5"
-lazy_static = "~1.4.0"
 log = "0.4"
 pest = "~2.1"
 pest_derive = "~2.1"
