@@ -15,9 +15,9 @@ path = "src/main.rs"
 
 [dependencies]
 colored = "2"
-gumdrop = "~0.8.0"
-log = "0.4"
-pretty_env_logger = "0.4"
-serde = { version = "~1.0", features = ["derive", "rc"] }
-serde_yaml = "~0.8"
-zap-model = { version = "~0.2", path = "../model" }
+gumdrop = "0"
+log = "0"
+pretty_env_logger = "0"
+serde = { version = "1", features = ["derive", "rc"] }
+serde_yaml = "0"
+zap-model = { version = "0", path = "../model" }
