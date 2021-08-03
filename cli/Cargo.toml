@@ -21,3 +21,12 @@ pretty_env_logger = "0"
 serde = { version = "1", features = ["derive", "rc"] }
 serde_yaml = "0"
 zap-model = { version = "0", path = "../model" }
+
+# Add openssl-sys as a direct dependency so it can be cross compiled to
+# x86_64-unknown-linux-musl using the "vendored" feature below
+openssl-sys = "*"
+
+[features]
+# Force openssl-sys to staticly link in the openssl library.
+# Necessary when cross compiling to x86_64-unknown-linux-musl.
+vendored = ["openssl-sys/vendored"]
