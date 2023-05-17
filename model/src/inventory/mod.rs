@@ -33,7 +33,8 @@ fn default_transport() -> Transport {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct SshConfig {
     pub user: String,
-    pub password: String,
+    pub password: Option<String>,
+    pub privatekey_path: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

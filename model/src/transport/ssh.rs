@@ -76,10 +76,21 @@ impl Transport for Ssh {
         if let Some(config) = &target.config {
             if let Some(sshconfig) = &config.ssh {
                 // requires PasswordAuthentication yes
-                self.session
-                    .userauth_password(&sshconfig.user, &sshconfig.password)
-                    .unwrap();
-                authenticated = true;
+                if sshconfig.password.is_some() {
+                    self.session
+                        .userauth_password(&sshconfig.user, sshconfig.password.as_ref().unwrap())
+                        .unwrap();
+                    authenticated = true;
+                } else if sshconfig.privatekey_path.is_some() {
+                    let privatekey_path = sshconfig.privatekey_path.as_ref().unwrap();
+                    let privatekey_path = Path::new(&privatekey_path);
+                    self.session
+                        .userauth_pubkey_file(&sshconfig.user, None, privatekey_path, None)
+                        .unwrap();
+                    authenticated = true;
+                } else {
+                    panic!("one of sshconfig.password or sshconfig.privatekey_path is required");
+                }
             }
         }
         if !authenticated {
